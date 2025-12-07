@@ -170,6 +170,20 @@ class BookHelper {
     return result.map((map) => Author.fromMap(map)).toList();
   }
 
+  static Future<List<Book>> getFavoriteBooks() async {
+    final db = await DBHelper.instance.database;
+    final result = await db.rawQuery('''
+      SELECT b.*, GROUP_CONCAT(a.name, ', ') as authors, GROUP_CONCAT(a.id, ',') as author_ids
+      FROM books b
+      LEFT JOIN book_authors ba ON b.id = ba.book_id
+      LEFT JOIN authors a ON ba.author_id = a.id
+      WHERE b.favorite = 1
+      GROUP BY b.id
+      ORDER BY b.added_at DESC
+    ''');
+    return result.map((map) => Book.fromMap(map)).toList();
+  }
+
   static Future<List<Book>> getByCategoryId(int categoryId) async {
     final db = await DBHelper.instance.database;
     final result = await db.rawQuery('''

@@ -1,9 +1,10 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:mylibrary/helper/book_helper.dart';
 import 'package:mylibrary/models/book.dart';
-import 'package:mylibrary/screens/book_form_screen.dart';
 import 'package:mylibrary/screens/book_details_screen.dart';
+import 'package:mylibrary/screens/book_form_screen.dart';
 import 'package:mylibrary/utils/color_manager.dart';
 
 class BooksListScreen extends StatefulWidget {
@@ -32,62 +33,161 @@ class _BooksListScreenState extends State<BooksListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Books'),
-      ),
+      appBar: AppBar(title: const Text('Books')),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : books.isEmpty
-              ? const Center(child: Text('No books'))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: books.length,
-                  itemBuilder: (context, index) {
-                    final book = books[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        leading: Container(
-                          width: 50,
-                          height: 70,
-                          decoration: BoxDecoration(
-                            color: ColorManager.pink,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: book.coverImage != null
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: book.coverImage!.startsWith('http')
-                                      ? Image.network(book.coverImage!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.book, color: Colors.white))
-                                      : Image.file(File(book.coverImage!), fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.book, color: Colors.white)),
-                                )
-                              : const Icon(Icons.book, color: Colors.white),
-                        ),
-                        title: Text(book.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: book.authors != null ? Text(book.authors!.join(', ')) : null,
-                        trailing: book.rating != null
-                            ? Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.star, color: Colors.amber, size: 16),
-                                  const SizedBox(width: 4),
-                                  Text(book.rating!.toStringAsFixed(1)),
-                                ],
-                              )
-                            : null,
-                        onTap: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => BookDetailsScreen(bookId: book.id!),
-                            ),
-                          );
-                          _loadBooks();
-                        },
+          ? const Center(child: Text('No books'))
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: books.length,
+              itemBuilder: (context, index) {
+                final book = books[index];
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
-                    );
-                  },
-                ),
+                    ],
+                  ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              BookDetailsScreen(bookId: book.id!),
+                        ),
+                      );
+                      _loadBooks();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 60,
+                            height: 85,
+                            decoration: BoxDecoration(
+                              color: ColorManager.pink,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.15),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: book.coverImage != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: book.coverImage!.startsWith('http')
+                                        ? Image.network(
+                                            book.coverImage!,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) =>
+                                                const Icon(
+                                                  Icons.book,
+                                                  color: Colors.white,
+                                                ),
+                                          )
+                                        : Image.file(
+                                            File(book.coverImage!),
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) =>
+                                                const Icon(
+                                                  Icons.book,
+                                                  color: Colors.white,
+                                                ),
+                                          ),
+                                  )
+                                : const Icon(
+                                    Icons.book,
+                                    color: Colors.white,
+                                    size: 32,
+                                  ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  book.title,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: ColorManager.darkPurple,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                if (book.authors != null) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    book.authors!.join(', '),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey[600],
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                                if (book.rating != null) ...[
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.star,
+                                          color: Colors.amber,
+                                          size: 16,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          book.rating!.toStringAsFixed(1),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                            color: Colors.amber,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.chevron_right,
+                            color: ColorManager.darkPink,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           await Navigator.push(

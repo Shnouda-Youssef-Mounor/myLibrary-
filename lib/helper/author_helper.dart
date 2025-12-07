@@ -49,4 +49,16 @@ class AuthorHelper {
     final db = await DBHelper.instance.database;
     return await db.delete('authors', where: 'id = ?', whereArgs: [id]);
   }
+
+  static Future<List<Map<String, dynamic>>> getBooksByAuthorId(int authorId) async {
+    final db = await DBHelper.instance.database;
+    final result = await db.rawQuery('''
+      SELECT b.*
+      FROM books b
+      INNER JOIN book_authors ba ON b.id = ba.book_id
+      WHERE ba.author_id = ?
+      ORDER BY b.title ASC
+    ''', [authorId]);
+    return result;
+  }
 }

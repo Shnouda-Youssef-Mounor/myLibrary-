@@ -19,6 +19,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   List<Author> authors = [];
   List<Book> topBooks = [];
+  List<Book> favoriteBooks = [];
   Book? currentBook;
   bool isLoading = true;
 
@@ -33,11 +34,13 @@ class _HomeScreenState extends State<HomeScreen> {
       BookHelper.getAuthors(),
       BookHelper.getTopRatedBooks(),
       BookHelper.getCurrentlyReading(),
+      BookHelper.getFavoriteBooks(),
     ]);
     setState(() {
       authors = results[0] as List<Author>;
       topBooks = results[1] as List<Book>;
       currentBook = results[2] as Book?;
+      favoriteBooks = results[3] as List<Book>;
       isLoading = false;
     });
   }
@@ -92,6 +95,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (currentBook != null) _buildCurrentlyReading(),
                       _buildAuthorsSection(),
                       _buildTopBooksSection(),
+
+                      if (favoriteBooks.isNotEmpty)
+                        _buildFavoriteBooksSection(),
                       Padding(
                         padding: const EdgeInsets.all(16),
                         child: ElevatedButton(
@@ -108,7 +114,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             foregroundColor: Colors.white,
                             minimumSize: const Size(double.infinity, 50),
                           ),
-                          child: const Text('To Library'),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [const Text('MyLibrary+')],
+                          ),
                         ),
                       ),
                     ],
@@ -124,19 +133,40 @@ class _HomeScreenState extends State<HomeScreen> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: ColorManager.darkPurple,
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          colors: [ColorManager.darkPurple, ColorManager.darkPink],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: ColorManager.darkPurple.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Currently Reading',
-            style: TextStyle(
-              color: ColorManager.background,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              const Icon(
+                Icons.menu_book,
+                color: ColorManager.background,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Currently Reading',
+                style: TextStyle(
+                  color: ColorManager.background,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Row(
@@ -210,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const Text(
                 'Authors',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: ColorManager.darkPurple,
                 ),
@@ -241,6 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     final author = authors[index];
                     return Container(
                       width: 80,
+                      height: 80,
                       margin: const EdgeInsets.only(left: 12),
                       child: Column(
                         children: [
@@ -251,7 +282,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ? ClipOval(
                                     child: Image.network(
                                       author.photo!,
-                                      fit: BoxFit.cover,
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.fill,
                                       errorBuilder: (_, __, ___) => const Icon(
                                         Icons.person,
                                         color: Colors.white,
@@ -278,6 +311,123 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildFavoriteBooksSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: const Text(
+            'Favorite Books',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: ColorManager.darkPurple,
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 150,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: favoriteBooks.length,
+            itemBuilder: (context, index) {
+              final book = favoriteBooks[index];
+              return Container(
+                width: 80,
+                margin: const EdgeInsets.only(right: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Stack(
+                      children: [
+                        Container(
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: ColorManager.pink,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: book.coverImage != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: book.coverImage!.startsWith('http')
+                                      ? Image.network(
+                                          book.coverImage!,
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          errorBuilder: (_, __, ___) =>
+                                              const Icon(
+                                                Icons.book,
+                                                color: Colors.white,
+                                                size: 48,
+                                              ),
+                                        )
+                                      : Image.file(
+                                          File(book.coverImage!),
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          errorBuilder: (_, __, ___) =>
+                                              const Icon(
+                                                Icons.book,
+                                                color: Colors.white,
+                                                size: 48,
+                                              ),
+                                        ),
+                                )
+                              : const Center(
+                                  child: Icon(
+                                    Icons.book,
+                                    color: Colors.white,
+                                    size: 48,
+                                  ),
+                                ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.favorite,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      book.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildTopBooksSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,7 +440,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const Text(
                 'Top 10 Rated Books',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: ColorManager.darkPurple,
                 ),
@@ -323,61 +473,142 @@ class _HomeScreenState extends State<HomeScreen> {
                 itemCount: topBooks.length,
                 itemBuilder: (context, index) {
                   final book = topBooks[index];
-                  return Card(
+                  return Container(
                     margin: const EdgeInsets.only(bottom: 12),
-                    child: ListTile(
-                      leading: Container(
-                        width: 50,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          color: ColorManager.pink,
-                          borderRadius: BorderRadius.circular(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
-                        child: book.coverImage != null
-                            ? ClipRRect(
+                      ],
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {},
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 60,
+                              height: 85,
+                              decoration: BoxDecoration(
+                                color: ColorManager.pink,
                                 borderRadius: BorderRadius.circular(8),
-                                child: book.coverImage!.startsWith('http')
-                                    ? Image.network(
-                                        book.coverImage!,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) =>
-                                            const Icon(
-                                              Icons.book,
-                                              color: Colors.white,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.15),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: book.coverImage != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: book.coverImage!.startsWith('http')
+                                          ? Image.network(
+                                              book.coverImage!,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) =>
+                                                  const Icon(
+                                                    Icons.book,
+                                                    color: Colors.white,
+                                                  ),
+                                            )
+                                          : Image.file(
+                                              File(book.coverImage!),
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) =>
+                                                  const Icon(
+                                                    Icons.book,
+                                                    color: Colors.white,
+                                                  ),
                                             ),
-                                      )
-                                    : Image.file(
-                                        File(book.coverImage!),
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) =>
-                                            const Icon(
-                                              Icons.book,
-                                              color: Colors.white,
-                                            ),
-                                      ),
-                              )
-                            : const Icon(Icons.book, color: Colors.white),
-                      ),
-                      title: Text(
-                        book.title,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: book.authors != null
-                          ? Text(book.authors!.join(', '))
-                          : null,
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 20),
-                          const SizedBox(width: 4),
-                          Text(
-                            book.rating?.toStringAsFixed(1) ?? '0.0',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                                    )
+                                  : const Icon(
+                                      Icons.book,
+                                      color: Colors.white,
+                                      size: 32,
+                                    ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    book.title,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                      color: ColorManager.darkPurple,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (book.authors != null) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      book.authors!.join(', '),
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey[600],
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.amber.withOpacity(0.2),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(
+                                              Icons.star,
+                                              color: Colors.amber,
+                                              size: 16,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              book.rating?.toStringAsFixed(1) ??
+                                                  '0.0',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                                color: Colors.amber,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(
+                              Icons.chevron_right,
+                              color: ColorManager.darkPink,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
